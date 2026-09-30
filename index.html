@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2AX - Agent-to-Agent Exchange Platform</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        cyber: {
+                            bg: '#0b0f19',
+                            card: '#111827',
+                            border: '#1f2937',
+                            neon: '#06b6d4',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glow-pulse {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            animation: pulse-glow 2s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 8px rgba(99, 102, 241, 0.3); }
+            100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.7); }
+        }
+        /* Custom scrollbar for terminal */
+        .terminal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .terminal-scroll::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: #21262d;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-cyber-bg text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-cyber-border bg-cyber-card/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyber-neon flex items-center justify-center shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid font-bold text-white text-lg">A2</i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-extrabold text-xl tracking-wider bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">A2AX</span>
+                        <span class="px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-brand-500/20 text-brand-500 border border-brand-500/30 rounded-full">Protocol v1.0</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Agent-to-Agent Autonomous Exchange Network</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-2 bg-slate-900/80 border border-cyber-border px-3 py-1.5 rounded-lg text-xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-slate-300 font-medium">A2A Relay Node: <span class="text-emerald-400 font-mono">ACTIVE (0.4ms)</span></span>
+                </div>
+                <button onclick="resetData()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition" title="초기화">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Metrics Banner -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 shadow-sm relative overflow-hidden group">
+                <div class="absolute -right-2 -bottom-2 opacity-10 group-hover:opacity-20 transition text-brand-500 text-5xl">
+                    <i class="fa-solid fa-handshake"></i>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">총 에이전트 거래 건수</p>
+                <h3 class="text-2xl font-bold font-mono text-white mt-1" id="stat-transactions">0</h3>
+                <span class="text-[11px] text-emerald-400 flex items-center mt-1">
+                    <i class="fa-solid fa-arrow-trend-up mr-1"></i> A2A 자동 처리율 100%
+                </span>
+            </div>
+
+            <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 shadow-sm relative overflow-hidden group">
+                <div class="absolute -right-2 -bottom-2 opacity-10 group-hover:opacity-20 transition text-cyber-neon text-5xl">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">활성 프로바이더 에이전트</p>
+                <h3 class="text-2xl font-bold font-mono text-white mt-1" id="stat-active-agents">3</h3>
+                <span class="text-[11px] text-slate-400 flex items-center mt-1">
+                    <i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> 신뢰 인증(PoA) 완료
+                </span>
+            </div>
+
+            <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 shadow-sm relative overflow-hidden group">
+                <div class="absolute -right-2 -bottom-2 opacity-10 group-hover:opacity-20 transition text-cyber-emerald text-5xl">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">에스크로 예치 총액</p>
+                <h3 class="text-2xl font-bold font-mono text-emerald-400 mt-1" id="stat-escrow-volume">₩0</h3>
+                <span class="text-[11px] text-slate-400 flex items-center mt-1">
+                    <i class="fa-solid fa-lock text-brand-500 mr-1"></i> 안전 정산 보장
+                </span>
+            </div>
+
+            <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 shadow-sm relative overflow-hidden group">
+                <div class="absolute -right-2 -bottom-2 opacity-10 group-hover:opacity-20 transition text-cyber-amber text-5xl">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <p class="text-xs text-slate-400 font-medium">A2AX 플랫폼 누적 수익 (2%)</p>
+                <h3 class="text-2xl font-bold font-mono text-amber-400 mt-1" id="stat-revenue">₩0</h3>
+                <span class="text-[11px] text-amber-400/80 flex items-center mt-1">
+                    <i class="fa-solid fa-bolt mr-1"></i> 수수료 자동 정산 (Take-Rate)
+                </span>
+            </div>
+        </div>
+
+        <!-- 3-Column Core Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Buyer Agent Settings (4 cols) -->
+            <section class="lg:col-span-4 space-y-6">
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-5">
+                    <div class="flex items-center justify-between border-b border-cyber-border pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-user-gear text-brand-500"></i>
+                            <h2 class="font-bold text-slate-100">유저 프록시 에이전트 설정</h2>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 bg-brand-500/10 text-brand-400 rounded border border-brand-500/20 font-mono">Buyer Agent</span>
+                    </div>
+
+                    <!-- User Name -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">사용자 지정 (Principal)</label>
+                        <input type="text" id="buyer-name" value="김철수 (User #8492)" class="w-full bg-slate-900 border border-cyber-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition">
+                    </div>
+
+                    <!-- Target Category -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">거래 서비스 분야</label>
+                        <select id="buyer-category" class="w-full bg-slate-900 border border-cyber-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition">
+                            <option value="hotel">🏨 강남 호텔 / 숙박 당일 특가</option>
+                            <option value="car">🚗 제주 렌터카 잔여 자원</option>
+                            <option value="freelance">💻 프론트엔드 외주 개발</option>
+                        </select>
+                    </div>
+
+                    <!-- Maximum Budget Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-300 uppercase">에이전트 결제 위임 한도</label>
+                            <span class="text-sm font-bold font-mono text-brand-400" id="budget-display">₩160,000</span>
+                        </div>
+                        <input type="range" id="buyer-budget" min="100000" max="300000" step="5000" value="160000" class="w-full accent-brand-500 bg-slate-800 rounded-lg cursor-pointer h-2">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+                            <span>₩100,000</span>
+                            <span>₩200,000</span>
+                            <span>₩300,000</span>
+                        </div>
+                    </div>
+
+                    <!-- Extra Preferences -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase mb-2">필수 협상 요구 조건 (Constraints)</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="pref-late-checkout" checked class="rounded border-slate-700 bg-slate-900 text-brand-500 focus:ring-0">
+                                <span>1시간 레이트 체크아웃 포함 필수</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="pref-free-drink" checked class="rounded border-slate-700 bg-slate-900 text-brand-500 focus:ring-0">
+                                <span>무료 웰컴 음료 쿠폰 요청</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="pref-free-cancel" class="rounded border-slate-700 bg-slate-900 text-brand-500 focus:ring-0">
+                                <span>24시간 전 무료 취소 가능 옵션</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Run Negotiation CTA Button -->
+                    <button onclick="runA2ANegotiation()" id="btn-run-a2a" class="w-full bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-brand-500/25 flex items-center justify-center space-x-2 transition transform active:scale-95 glow-pulse">
+                        <i class="fa-solid fa-robot text-lg animate-bounce"></i>
+                        <span>A2A 자율 가격 협상 시작</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Middle Column: Provider Agents Manager (4 cols) -->
+            <section class="lg:col-span-4 space-y-6">
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-cyber-border pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-store text-cyber-neon"></i>
+                            <h2 class="font-bold text-slate-100">프로바이더 에이전트 목록</h2>
+                        </div>
+                        <button onclick="openAddAgentModal()" class="text-xs text-cyber-neon hover:underline font-medium">
+                            + 에이전트 추가
+                        </button>
+                    </div>
+
+                    <!-- Seller Agents List Container -->
+                    <div id="seller-agents-list" class="space-y-3 max-h-[460px] overflow-y-auto pr-1">
+                        <!-- Dynamic Seller Agent Cards render here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: Live A2A Protocol Exchange Terminal (4 cols) -->
+            <section class="lg:col-span-4 space-y-6">
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 flex flex-col h-full min-h-[500px]">
+                    <div class="flex items-center justify-between border-b border-cyber-border pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-terminal text-emerald-400"></i>
+                            <h2 class="font-bold text-slate-100">A2A 프로토콜 통신 터미널</h2>
+                        </div>
+                        <span id="terminal-badge" class="px-2 py-0.5 text-[10px] font-mono font-bold bg-slate-800 text-slate-400 rounded border border-slate-700">IDLE</span>
+                    </div>
+
+                    <!-- Terminal Visual Output Area -->
+                    <div class="mt-3 flex-1 bg-[#090d16] border border-slate-800 rounded-lg p-3 font-mono text-xs overflow-y-auto terminal-scroll space-y-2 h-[410px]" id="terminal-logs">
+                        <div class="text-slate-500 text-[11px] border-b border-slate-800/80 pb-2">
+                            // A2AX Exchange Network Engine Ready.<br>
+                            // Waiting for Buyer Agent trigger signal...
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Bottom Full Width: Smart Escrow & Revenue Settlement Ledger -->
+        <section class="bg-cyber-card border border-cyber-border rounded-xl p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-cyber-border pb-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-file-contract text-amber-400"></i>
+                    <h2 class="font-bold text-slate-100">스마트 에스크로 및 수익 정산 장부 (Escrow Ledger)</h2>
+                </div>
+                <span class="text-xs text-slate-400">자동 2% Take-Rate 공제 및 조건부 입금 완료 로그</span>
+            </div>
+
+            <!-- Ledger Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs font-mono">
+                    <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] border-b border-cyber-border">
+                        <tr>
+                            <th class="py-3 px-3">Contract ID</th>
+                            <th class="py-3 px-3">구매자</th>
+                            <th class="py-3 px-3">낙찰 판매자 에이전트</th>
+                            <th class="py-3 px-3">최종 확정가</th>
+                            <th class="py-3 px-3">플랫폼 수수료(2%)</th>
+                            <th class="py-3 px-3">판매자 정산액</th>
+                            <th class="py-3 px-3">에스크로 상태</th>
+                            <th class="py-3 px-3 text-right">검증</th>
+                        </tr>
+                    </thead>
+                    <tbody id="escrow-ledger-body" class="divide-y divide-cyber-border text-slate-200">
+                        <tr id="empty-ledger-row">
+                            <td colspan="8" class="py-8 text-center text-slate-500 font-sans">
+                                아직 진행된 A2A 거래 계약 내역이 없습니다. 위 'A2A 자율 가격 협상 시작' 버튼을 눌러보세요.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Proof of Agent (PoA) Modal -->
+    <div id="poa-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cyber-card border border-cyber-border w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-2xl relative">
+            <button onclick="closePoaModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+                    <i class="fa-solid fa-shield-check text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-base">Proof of Agent (PoA) 암호화 서명 검증</h3>
+                    <p class="text-xs text-slate-400">Zero-Knowledge Proof Signed Contract</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 bg-slate-900 border border-slate-800 rounded-xl p-4 font-mono text-xs">
+                <div>
+                    <span class="text-slate-500">Contract Hash:</span>
+                    <p id="modal-contract-id" class="text-brand-400 font-bold break-all"></p>
+                </div>
+                <div>
+                    <span class="text-slate-500">Digital Signature (Agent Auth):</span>
+                    <p id="modal-signature" class="text-emerald-400 break-all text-[11px]"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                    <div>
+                        <span class="text-slate-500">Buyer Principal:</span>
+                        <p id="modal-buyer" class="text-slate-200"></p>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">Seller Agent:</span>
+                        <p id="modal-seller" class="text-slate-200"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-xs text-emerald-300 flex items-start space-x-2">
+                <i class="fa-solid fa-circle-check mt-0.5"></i>
+                <span>본 거래는 위변조가 불가능한 A2AX 에이전트 인증 로그에 저장되었으며, 서비스 이행 API 연동 확인 즉시 자동 정산됩니다.</span>
+            </div>
+
+            <button onclick="closePoaModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg text-xs transition">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Seller Modal -->
+    <div id="add-agent-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cyber-card border border-cyber-border w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl">
+            <h3 class="font-bold text-white text-base">신규 프로바이더 에이전트 등록</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">업체/에이전트 명칭</label>
+                    <input type="text" id="new-agent-name" placeholder="예: 안반데기 리조트 에이전트" class="w-full bg-slate-900 border border-cyber-border rounded-lg px-3 py-2 text-xs text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">기본 정가 (KRW)</label>
+                        <input type="number" id="new-agent-base" value="200000" class="w-full bg-slate-900 border border-cyber-border rounded-lg px-3 py-2 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">최저 마지노선 (KRW)</label>
+                        <input type="number" id="new-agent-min" value="140000" class="w-full bg-slate-900 border border-cyber-border rounded-lg px-3 py-2 text-xs text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">협상 전략 (Strategy)</label>
+                    <select id="new-agent-strategy" class="w-full bg-slate-900 border border-cyber-border rounded-lg px-3 py-2 text-xs text-white">
+                        <option value="aggressive">공격적 (경쟁 발생 시 최저가까지 할인)</option>
+                        <option value="balanced">중립적 (적정 10-15% 할인 유지)</option>
+                        <option value="conservative">보수적 (최소 할인만 제공)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="closeAddAgentModal()" class="w-1/2 bg-slate-800 text-slate-300 py-2 rounded-lg text-xs font-semibold">취소</button>
+                <button onclick="saveNewAgent()" class="w-1/2 bg-brand-600 hover:bg-brand-500 text-white py-2 rounded-lg text-xs font-semibold">등록하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Global Application State
+        const state = {
+            stats: {
+                transactions: 0,
+                escrowVolume: 0,
+                platformRevenue: 0
+            },
+            sellers: [
+                { id: 'seller-1', name: '신라호텔 에이전트', basePrice: 200000, minPrice: 165000, strategy: 'conservative', benefits: ['1시간 레이트 체크아웃', '무료 음료 쿠폰'] },
+                { id: 'seller-2', name: '하얏트호텔 에이전트', basePrice: 180000, minPrice: 145000, strategy: 'aggressive', benefits: ['1시간 레이트 체크아웃', '웰컴 쿠키'] },
+                { id: 'seller-3', name: '롯데호텔 에이전트', basePrice: 190000, minPrice: 150000, strategy: 'balanced', benefits: ['수영장 이용권', '무료 음료 쿠폰'] }
+            ],
+            ledger: [],
+            isNegotiating: false
+        };
+
+        // DOM Elements
+        const budgetSlider = document.getElementById('buyer-budget');
+        const budgetDisplay = document.getElementById('budget-display');
+        const terminalLogs = document.getElementById('terminal-logs');
+        const terminalBadge = document.getElementById('terminal-badge');
+        const btnRun = document.getElementById('btn-run-a2a');
+
+        // Initialize UI listeners
+        budgetSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            budgetDisplay.innerText = `₩${val.toLocaleString()}`;
+        });
+
+        // Format currency helper
+        function formatKRW(val) {
+            return '₩' + Math.round(val).toLocaleString();
+        }
+
+        // Generate SHA256-like Contract Hash
+        function generateContractId() {
+            const chars = '0123456789abcdef';
+            let hash = '0x';
+            for (let i = 0; i < 12; i++) {
+                hash += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return hash;
+        }
+
+        // Render Seller Agents List
+        function renderSellers() {
+            const listEl = document.getElementById('seller-agents-list');
+            listEl.innerHTML = '';
+
+            state.sellers.forEach(seller => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-900 border border-cyber-border rounded-xl p-3 space-y-2 hover:border-slate-700 transition';
+
+                let strategyBadge = '';
+                if (seller.strategy === 'aggressive') {
+                    strategyBadge = '<span class="text-[9px] px-1.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded">공격적 할인</span>';
+                } else if (seller.strategy === 'balanced') {
+                    strategyBadge = '<span class="text-[9px] px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded">중립적 균형</span>';
+                } else {
+                    strategyBadge = '<span class="text-[9px] px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">보수적 유지</span>';
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-xs text-white">${seller.name}</span>
+                        ${strategyBadge}
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px] font-mono bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+                        <div>
+                            <span class="text-slate-500 block text-[9px]">정가 (Base)</span>
+                            <span class="text-slate-300">${formatKRW(seller.basePrice)}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[9px]">마지노선 (Floor)</span>
+                            <span class="text-emerald-400 font-semibold">${formatKRW(seller.minPrice)}</span>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 flex items-center justify-between">
+                        <span>포함 혜택: ${seller.benefits.join(', ')}</span>
+                        <button onclick="removeSeller('${seller.id}')" class="text-slate-500 hover:text-rose-400">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+
+            document.getElementById('stat-active-agents').innerText = state.sellers.length;
+        }
+
+        function removeSeller(id) {
+            state.sellers = state.sellers.filter(s => s.id !== id);
+            renderSellers();
+        }
+
+        // Modal Handlers
+        function openAddAgentModal() {
+            document.getElementById('add-agent-modal').classList.remove('hidden');
+        }
+        function closeAddAgentModal() {
+            document.getElementById('add-agent-modal').classList.add('hidden');
+        }
+        function saveNewAgent() {
+            const name = document.getElementById('new-agent-name').value.trim() || '신규 제휴 에이전트';
+            const basePrice = parseInt(document.getElementById('new-agent-base').value) || 200000;
+            const minPrice = parseInt(document.getElementById('new-agent-min').value) || 150000;
+            const strategy = document.getElementById('new-agent-strategy').value;
+
+            state.sellers.push({
+                id: 'seller-' + Date.now(),
+                name: name,
+                basePrice: basePrice,
+                minPrice: minPrice,
+                strategy: strategy,
+                benefits: ['1시간 레이트 체크아웃', '무료 서비스']
+            });
+
+            renderSellers();
+            closeAddAgentModal();
+        }
+
+        // Terminal Log Assistant
+        function logTerminal(message, type = 'info', jsonPayload = null) {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+
+            const entry = document.createElement('div');
+            entry.className = 'space-y-1 animate-fade-in';
+
+            let typeBadge = '';
+            if (type === 'req') typeBadge = '<span class="text-brand-400 font-bold">[BUYER_REQ]</span>';
+            else if (type === 'prop') typeBadge = '<span class="text-amber-400 font-bold">[PROPOSAL]</span>';
+            else if (type === 'success') typeBadge = '<span class="text-emerald-400 font-bold">[CONTRACT_SIGNED]</span>';
+            else if (type === 'fail') typeBadge = '<span class="text-rose-400 font-bold">[REJECTED]</span>';
+            else typeBadge = '<span class="text-cyber-neon font-bold">[A2AX_RELAY]</span>';
+
+            let html = `<div class="text-[10px] text-slate-500">${timeStr} ${typeBadge} ${message}</div>`;
+
+            if (jsonPayload) {
+                html += `<pre class="bg-slate-950 p-2 rounded text-[10px] text-slate-300 border border-slate-800/80 font-mono overflow-x-auto">${JSON.stringify(jsonPayload, null, 2)}</pre>`;
+            }
+
+            entry.innerHTML = html;
+            terminalLogs.appendChild(entry);
+            terminalLogs.scrollTop = terminalLogs.scrollHeight;
+        }
+
+        // Core Simulation Engine
+        async function runA2ANegotiation() {
+            if (state.isNegotiating) return;
+            if (state.sellers.length === 0) {
+                alert('등록된 프로바이더 에이전트가 없습니다. 에이전트를 먼저 추가하세요.');
+                return;
+            }
+
+            state.isNegotiating = true;
+            btnRun.disabled = true;
+            btnRun.classList.add('opacity-50', 'cursor-not-allowed');
+            terminalBadge.innerText = 'NEGOTIATING';
+            terminalBadge.className = 'px-2 py-0.5 text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 rounded border border-amber-500/30 animate-pulse';
+
+            const buyerName = document.getElementById('buyer-name').value;
+            const maxBudget = parseInt(budgetSlider.value);
+            const category = document.getElementById('buyer-category').value;
+
+            // Collect constraints
+            const constraints = [];
+            if (document.getElementById('pref-late-checkout').checked) constraints.push('late_checkout_1h');
+            if (document.getElementById('pref-free-drink').checked) constraints.push('free_drink');
+            if (document.getElementById('pref-free-cancel').checked) constraints.push('free_cancellation');
+
+            terminalLogs.innerHTML = ''; // Clear terminal for fresh run
+            logTerminal('Starting A2A Autonomous Negotiation Session...', 'info');
+
+            await new Promise(r => setTimeout(r, 400));
+
+            // Step 1: Broadcast Buyer Request
+            const buyerQuery = {
+                protocol: "A2AX/1.0",
+                action: "BROADCAST_SEARCH",
+                principal: buyerName,
+                category: category,
+                max_budget: maxBudget,
+                required_constraints: constraints
+            };
+            logTerminal(`User Agent broadcasting request to ${state.sellers.length} provider agents...`, 'req', buyerQuery);
+
+            await new Promise(r => setTimeout(r, 600));
+
+            // Step 2: Sellers Evaluate & Generate Dynamic Offer
+            let proposals = [];
+
+            for (const seller of state.sellers) {
+                // Calculate dynamic discount based on strategy
+                let discountRate = 0.10; // Default 10%
+                if (seller.strategy === 'aggressive') discountRate = 0.20; // 20%
+                if (seller.strategy === 'conservative') discountRate = 0.05; // 5%
+
+                let offeredPrice = Math.max(seller.minPrice, Math.round(seller.basePrice * (1 - discountRate)));
+
+                // Extra slash if buyer budget is slightly lower to close the deal
+                if (offeredPrice > maxBudget && seller.strategy === 'aggressive' && seller.minPrice <= maxBudget) {
+                    offeredPrice = maxBudget; // Match budget exactly
+                }
+
+                const proposalPayload = {
+                    seller_id: seller.id,
+                    seller_name: seller.name,
+                    offered_price: offeredPrice,
+                    offered_benefits: seller.benefits,
+                    status: offeredPrice <= maxBudget ? "QUALIFIED" : "OVER_BUDGET"
+                };
+
+                proposals.push({
+                    seller: seller,
+                    price: offeredPrice,
+                    payload: proposalPayload
+                });
+
+                logTerminal(`Received dynamic offer from ${seller.name}`, 'prop', proposalPayload);
+                await new Promise(r => setTimeout(r, 400));
+            }
+
+            // Step 3: Buyer Agent Evaluates Proposals
+            logTerminal("Buyer Agent evaluating proposals against budget and constraints...", "info");
+            await new Promise(r => setTimeout(r, 500));
+
+            const validProposals = proposals.filter(p => p.price <= maxBudget);
+
+            if (validProposals.length === 0) {
+                logTerminal(`Negotiation Failed: All proposals exceeded max budget limit (${formatKRW(maxBudget)}).`, 'fail');
+                terminalBadge.innerText = 'FAILED';
+                terminalBadge.className = 'px-2 py-0.5 text-[10px] font-mono font-bold bg-rose-500/20 text-rose-400 rounded border border-rose-500/30';
+            } else {
+                // Pick lowest price deal
+                validProposals.sort((a, b) => a.price - b.price);
+                const bestDeal = validProposals[0];
+
+                logTerminal(`Optimal Deal Selected: ${bestDeal.seller.name} (${formatKRW(bestDeal.price)})`, 'info');
+
+                await new Promise(r => setTimeout(r, 500));
+
+                // Step 4: Lock Escrow and Sign Contract
+                const contractId = generateContractId();
+                const platformFee = Math.round(bestDeal.price * 0.02); // 2% Take-Rate
+                const sellerPayout = bestDeal.price - platformFee;
+
+                const contractLog = {
+                    contract_id: contractId,
+                    buyer: buyerName,
+                    seller: bestDeal.seller.name,
+                    agreed_amount: bestDeal.price,
+                    platform_fee_2pct: platformFee,
+                    net_seller_payout: sellerPayout,
+                    escrow_status: "LOCKED_AND_SETTLED"
+                };
+
+                logTerminal(`Contract executed and escrow funds locked successfully!`, 'success', contractLog);
+
+                // Update Stats & Ledger
+                state.stats.transactions++;
+                state.stats.escrowVolume += bestDeal.price;
+                state.stats.platformRevenue += platformFee;
+
+                state.ledger.unshift({
+                    id: contractId,
+                    buyer: buyerName,
+                    seller: bestDeal.seller.name,
+                    price: bestDeal.price,
+                    fee: platformFee,
+                    payout: sellerPayout,
+                    date: new Date().toLocaleTimeString(),
+                    signature: "0x" + Array.from({length: 32}, () => Math.floor(Math.random()*16).toString(16)).join('')
+                });
+
+                updateStatsUI();
+                renderLedger();
+
+                terminalBadge.innerText = 'SETTLED';
+                terminalBadge.className = 'px-2 py-0.5 text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 rounded border border-emerald-500/30';
+            }
+
+            state.isNegotiating = false;
+            btnRun.disabled = false;
+            btnRun.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        // Update Stats Banner
+        function updateStatsUI() {
+            document.getElementById('stat-transactions').innerText = state.stats.transactions;
+            document.getElementById('stat-escrow-volume').innerText = formatKRW(state.stats.escrowVolume);
+            document.getElementById('stat-revenue').innerText = formatKRW(state.stats.platformRevenue);
+        }
+
+        // Render Escrow Ledger Table
+        function renderLedger() {
+            const tbody = document.getElementById('escrow-ledger-body');
+            tbody.innerHTML = '';
+
+            if (state.ledger.length === 0) {
+                tbody.innerHTML = `
+                    <tr id="empty-ledger-row">
+                        <td colspan="8" class="py-8 text-center text-slate-500 font-sans">
+                            아직 진행된 A2A 거래 계약 내역이 없습니다. 위 'A2A 자율 가격 협상 시작' 버튼을 눌러보세요.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            state.ledger.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-900/50 transition border-b border-cyber-border/50';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 text-brand-400 font-semibold">${item.id}</td>
+                    <td class="py-3 px-3 text-slate-300">${item.buyer}</td>
+                    <td class="py-3 px-3 text-white font-medium">${item.seller}</td>
+                    <td class="py-3 px-3 text-emerald-400 font-semibold">${formatKRW(item.price)}</td>
+                    <td class="py-3 px-3 text-amber-400">${formatKRW(item.fee)}</td>
+                    <td class="py-3 px-3 text-slate-300">${formatKRW(item.payout)}</td>
+                    <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center w-max">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span> 정산 완료
+                        </span>
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                        <button onclick="viewPoaModal('${item.id}')" class="px-2 py-1 bg-slate-800 hover:bg-brand-600 text-slate-200 hover:text-white rounded text-[10px] transition">
+                            PoA 검증
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // PoA Modal
+        function viewPoaModal(contractId) {
+            const item = state.ledger.find(l => l.id === contractId);
+            if (!item) return;
+
+            document.getElementById('modal-contract-id').innerText = item.id;
+            document.getElementById('modal-signature').innerText = item.signature;
+            document.getElementById('modal-buyer').innerText = item.buyer;
+            document.getElementById('modal-seller').innerText = item.seller;
+
+            document.getElementById('poa-modal').classList.remove('hidden');
+        }
+
+        function closePoaModal() {
+            document.getElementById('poa-modal').classList.add('hidden');
+        }
+
+        // Reset Data
+        function resetData() {
+            state.stats = { transactions: 0, escrowVolume: 0, platformRevenue: 0 };
+            state.ledger = [];
+            updateStatsUI();
+            renderLedger();
+            terminalLogs.innerHTML = `
+                <div class="text-slate-500 text-[11px] border-b border-slate-800/80 pb-2">
+                    // A2AX Exchange Network Engine Ready.<br>
+                    // Waiting for Buyer Agent trigger signal...
+                </div>
+            `;
+            terminalBadge.innerText = 'IDLE';
+            terminalBadge.className = 'px-2 py-0.5 text-[10px] font-mono font-bold bg-slate-800 text-slate-400 rounded border border-slate-700';
+        }
+
+        // Init App on Load
+        window.onload = function() {
+            renderSellers();
+            renderLedger();
+        };
+    </script>
+</body>
+</html>
